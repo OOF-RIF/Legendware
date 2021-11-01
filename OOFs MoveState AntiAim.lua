@@ -22,7 +22,7 @@ end
 -- Get move states
 -- Yes... It is this easy...
 local function GetMoveState()
-    -- cant be fucked to use get_velocity() 
+    -- cant be fucked to use get_velocity()
     local velocity_x = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[0]")
     local velocity_y = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[1]")
     local speed = velocity_x ~= nil and math.floor(math.sqrt(velocity_x * velocity_x + velocity_y * velocity_y + 0.5)) or 0
@@ -30,16 +30,16 @@ local function GetMoveState()
     local InDuck = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 263
     local InAir = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 256
     -- now we actually get proper movestates...
-    if not InDuck and not InAir and not menu.get_key_bind_state("misc.slow_walk_key") and speed <= 2 then
-        return "Standing" -- We are standing when we are not: crouching, in air or slowwalking or running
-    elseif InDuck and not InAir and not menu.get_key_bind_state("misc.slow_walk_key") then
-        return "Crouching" -- We are crouching when we are not: in air, swlowalking, or running
-    elseif not InAir and menu.get_key_bind_state("misc.slow_walk_key") then
+    if not InDuck and not InAir and speed > 2 and speed <= 250 then
+        return "Moving" -- We are standing when we are not: crouching, in air or slowwalking or running
+    if speed <= 2 then
+        return "Standing" -- We are crouching when we are not: in air, swlowalking, or running
+    if InAir then
+        return "In Air" -- We are crouching when we are not: in air, swlowalking, or running
+    if menu.get_key_bind_state("misc.slow_walk_key") then
         return "Walking" -- We are crouching when we are not: in air, swlowalking, or running
-    elseif not InAir and not menu.get_key_bind_state("misc.slow_walk_key") and speed <= 250 and speed > 1 then
-        return "Running" -- We are crouching when we are not: in air, swlowalking, or running
-    elseif InAir then
-        return "In Air" -- We are in air
+    if InDuck then
+        return "Crouching" -- We are in air
     end
 end
 -- Load the appropriate antiaim settings
