@@ -1,4 +1,6 @@
 -- Basic Semirage Script
+menu.add_key_bind("AntiAim Key")
+menu.add_check_box("Force Legit AA")
 menu.add_key_bind("Ragebot Key")
 menu.add_key_bind("Autowall Key")
 menu.add_key_bind("Autofire Key")
@@ -7,6 +9,12 @@ menu.add_slider_int("Original FOV value", 1, 180)
 menu.add_slider_int("Override FOV value", 1, 180)
 
 local function HandleKeys()
+	menu.set_bool("anti_aim.enable", menu.get_key_bind_state("AntiAim Key"))
+	
+	if menu.get_bool("Force Legit AA") then
+		menu.set_int("anti_aim.pitch", 0)
+	end
+
     menu.set_bool("rage.enable", menu.get_key_bind_state("Ragebot Key"))
 
     menu.set_bool("rage.automatic_wall", menu.get_key_bind_state("Autowall Key"))
@@ -23,3 +31,4 @@ end
 client.add_callback("create_move", function () 
     HandleKeys()
 end)
+
