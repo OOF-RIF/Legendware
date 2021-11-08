@@ -1,3 +1,4 @@
+-- store movestates
 local movestates = {
     "Standing",
     "Walking",
@@ -5,7 +6,8 @@ local movestates = {
     "Crouching",
     "In Air",
 }
-for i = 1, #movestates do -- Create an antiaim option for every movestate
+-- create an antiaim option for every movestate
+for i = 1, #movestates do
     menu.add_combo_box(movestates[i].." pitch", {"None", "Minimal", "Maximal"})
     menu.add_combo_box(movestates[i].." target yaw", {"Local view", "At targets"})
     menu.add_check_box(movestates[i].." edge yaw")
@@ -18,29 +20,6 @@ for i = 1, #movestates do -- Create an antiaim option for every movestate
     menu.add_combo_box(movestates[i].." fake lag type", {"Static", "Dynamic", "Fluctuate"})
     menu.add_slider_int(movestates[i].." fake lag limit", 1, 16)
     menu.next_line()
-end
--- Get move states
--- Yes... It is this easy...
-local function GetMoveState()
-    -- cant be fucked to use get_velocity()
-    local velocity_x = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[0]")
-    local velocity_y = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[1]")
-    local speed = velocity_x ~= nil and math.floor(math.sqrt(velocity_x * velocity_x + velocity_y * velocity_y + 0.5)) or 0
-    -- using props to get movestates be like
-    local InDuck = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 263
-    local InAir = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 256
-    -- now we actually get proper movestates...
-    if not InDuck and not InAir and speed > 2 and speed <= 250 then
-        return "Moving" -- We are standing when we are not: crouching, in air or slowwalking or running
-    if speed <= 2 then
-        return "Standing" -- We are crouching when we are not: in air, swlowalking, or running
-    if InAir then
-        return "In Air" -- We are crouching when we are not: in air, swlowalking, or running
-    if menu.get_key_bind_state("misc.slow_walk_key") then
-        return "Walking" -- We are crouching when we are not: in air, swlowalking, or running
-    if InDuck then
-        return "Crouching" -- We are in air
-    end
 end
 -- Load the appropriate antiaim settings
 local function LoadAntiAim(movestate)
@@ -56,13 +35,36 @@ local function LoadAntiAim(movestate)
     menu.set_int("anti_aim.fake_lag_type", menu.get_int(movestate.." fake lag type"))
     menu.set_int("anti_aim.fake_lag_limit", menu.get_int(movestate.." fake lag limit"))
 end
--- Now we handle the actual antiaim portion.
+-- Handle anti-aim
 local function HandleAntiAim()
-    local movestate = GetMoveState() -- Get move state
-
-    LoadAntiAim(movestate) -- Load antiaim settings
+    -- cant be fucked to use get_velocity()
+    local velocity_x = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[0]")
+    local velocity_y = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[1]")
+    local speed = velocity_x ~= nil and math.floor(math.sqrt(velocity_x * velocity_x + velocity_y * velocity_y + 0.5)) or 0
+    -- using props to get movetypes
+    local InDuck = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 263
+    local InAir = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 256
+    -- now we actually get proper movestates...
+    if not InAir and not InDuck and speed > 1 and speed <= 250 then
+		-- we are running
+		LoadAntiAim("Running")
+	end
+	if speed == 1 then
+		-- we are standing
+		LoadAntiAim("Standing")
+	end
+	if InAir then
+		-- we are in air
+		LoadAntiAim("In Air")
+	end
+	if menu.get_key_bind_state("misc.slow_walk_key") then
+		-- we are walking
+		LoadAntiAim("Walking")
+	end
+	if InDuck then
+		-- we are crouching
+		LoadAntiAim("Crouching")
+	end
 end
-
-client.add_callback("create_move", function ()
-    HandleAntiAim()
-end)
+-- Callback
+client.add_callback("create_move", HandleAntiAim)
