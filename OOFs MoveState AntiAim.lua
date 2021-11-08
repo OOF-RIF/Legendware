@@ -17,8 +17,6 @@ for i = 1, #movestates do
     menu.add_combo_box(movestates[i].." desync type", {"None", "Static", "Jitter"})
     menu.add_slider_int(movestates[i].." desync range", 1, 60)
     menu.add_slider_int(movestates[i].." desync range inverted", 1, 60)
-    menu.add_combo_box(movestates[i].." fake lag type", {"Static", "Dynamic", "Fluctuate"})
-    menu.add_slider_int(movestates[i].." fake lag limit", 1, 16)
     menu.next_line()
 end
 -- Load the appropriate antiaim settings
@@ -32,24 +30,19 @@ local function LoadAntiAim(movestate)
     menu.set_int("anti_aim.desync_type", menu.get_int(movestate.." desync type"))
     menu.set_int("anti_aim.desync_range", menu.get_int(movestate.." desync range"))
     menu.set_int("anti_aim.desync_range_inverted", menu.get_int(movestate.." desync range inverted"))
-    menu.set_int("anti_aim.fake_lag_type", menu.get_int(movestate.." fake lag type"))
-    menu.set_int("anti_aim.fake_lag_limit", menu.get_int(movestate.." fake lag limit"))
 end
 -- Handle anti-aim
 local function HandleAntiAim()
-    -- cant be fucked to use get_velocity()
-    local velocity_x = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[0]")
-    local velocity_y = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_vecVelocity[1]")
-    local speed = velocity_x ~= nil and math.floor(math.sqrt(velocity_x * velocity_x + velocity_y * velocity_y + 0.5)) or 0
+    -- i had to use get_velocity... that was the entire issue...
+	local speed = math.floor(entitylist.get_local_player():get_velocity():length_2d())
     -- using props to get movetypes
-    local InDuck = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 263
-    local InAir = entitylist.get_local_player():get_prop_int("DT_CSPlayer", "m_fFlags") == 256
+    local InDuck = entitylist.get_local_player():get_prop_int("CBasePlayer", "m_fFlags") == 263
+    local InAir = entitylist.get_local_player():get_prop_int("CBasePlayer", "m_fFlags") == 256
     -- now we actually get proper movestates...
-    if not InAir and not InDuck and speed > 1 and speed <= 250 then
+    if not InAir and not InDuck and speed > 1 then
 		-- we are running
 		LoadAntiAim("Running")
-	end
-	if speed == 1 then
+	elseif speed <= 1 then
 		-- we are standing
 		LoadAntiAim("Standing")
 	end
